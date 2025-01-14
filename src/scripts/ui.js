@@ -1,0 +1,1 @@
+// Interface do usuário (HUD e pontuação)
