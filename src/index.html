@@ -1,13 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Target Shooter</title>
-  <link rel="stylesheet" href="../styles/style.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tiro ao Alvo 3D</title>
+    <link rel="stylesheet" type="text/css" href="../styles/style.css" />
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>
-  <script type="module" src="./scripts/main.js"></script>
+    <div id="blocker">
+        <div id="instructions">
+            <div id="playButton">
+                Jogue Agora
+                <p>
+                    ESC - Menu
+                    <br />
+                    WASF SETAS - Mover
+                    <br />
+                    MOUSE ESQUERDO  - Atira
+                    <br />
+                    ESPAÇO  - Atira
+                    <br />
+                    M - Play / Pausa Musica
+                </p>
+            </div>
+        </div>
+    </div>
+    <img id="crosshair" src="https://www.shanebrumback.com/images/reticle.png" alt="Crosshair">
+
+    <script src="https://cdn.jsdelivr.net/npm/three@latest/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@latest/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@latest/examples/js/controls/PointerLockControls.js"></script>
+    
+    <script type="module" src="./scripts/main.js">
+
+    </script>
+
 </body>
+
 </html>
