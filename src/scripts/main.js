@@ -95,6 +95,7 @@
 
         playButton.addEventListener('click', function () {
             controls.lock();
+            cronometroJogo();
         });
 
         controls.addEventListener('lock', function () {
@@ -182,6 +183,7 @@
 
         // render loop
         function animate() {
+            if(!jogoAtivo) return;
             requestAnimationFrame(animate);
 
             updateParticles();
@@ -225,7 +227,35 @@
             renderer.render(scene, camera);
         }
 
-        animate();
+        let tempoRestante = 10;
+        let jogoAtivo = false;
+        let totalPlacar = 0;
+
+        function cronometroJogo(){
+            if(!jogoAtivo){
+                jogoAtivo = true;
+                tempoRestante = 10;
+                console.log("Jogo iniciado!");
+
+                let contador = setInterval(() => {
+                    tempoRestante--;
+                    console.log(`Tempo restante: ${tempoRestante} segundos`);
+
+                    if (tempoRestante <= 0){
+                        clearInterval(contador);
+                        encerrarJogo();
+                    }
+                }, 1000);
+            }
+            animate();
+        }
+
+        function encerrarJogo(){
+            jogoAtivo = false;
+            alert(`Tempo esgotado! Jogo encerrado. Você conseguiu ${totalPlacar} pontos`);
+            //logica
+            controls.unlock();
+        }
 
         function removeParticle(particle) {
             scene.remove(particle);
@@ -235,7 +265,7 @@
         function createParticle() {
             playLaserSound();
             var geometry = new THREE.SphereGeometry(0.05, 16, 16);
-            var material = new THREE.MeshBasicMaterial({ color: 0xADD8E6 });
+            var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
             var particle = new THREE.Mesh(geometry, material);
             particle.position.copy(camera.position);
             particle.initialDirection = camera.getWorldDirection(new THREE.Vector3());
@@ -655,7 +685,7 @@
                 });
             } else {
                 playSound(laserSoundBuffer, 1);
-            }
+            }  
         }
 
         // Function to play the explosion sound
@@ -684,6 +714,12 @@
             source.connect(gainNode);
             gainNode.connect(audioContext.destination);
             source.start(0);
+        }
+
+        
+        function updatePlacar() {
+            //verificar time
+            //contabilizar placar
         }
 
 

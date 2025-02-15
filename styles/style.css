@@ -11,6 +11,12 @@ canvas {
     display: block;
 }
 
+#placar {
+    margin-left: 30px;
+    font-size: 50px;
+    color: white;
+}
+
 #blocker {
     position: fixed;
     width: 100%;
