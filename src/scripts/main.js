@@ -1,4 +1,4 @@
-        // Cria a cena e ajusta camera
+// Cria a cena e ajusta camera
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(9, 0.3, 3); 
@@ -8,14 +8,42 @@ var renderer = new THREE.WebGLRenderer({ alpha: true, depth: true });
 // Configuracao do renderizador
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.toneMapping = THREE.ReinhardToneMapping; //iluminacao??
+renderer.toneMapping = THREE.ReinhardToneMapping; // Cor e brilho
 renderer.setClearColor(0x000000, 1); //Cor do background
 renderer.domElement.style.position = 'fixed';
 renderer.domElement.id = 'renderer';
 renderer.domElement.style.zIndex = '-1';
 renderer.domElement.style.left = '0';
 renderer.domElement.style.top = '0';
+renderer.shadowMap.enabled = true; // Habilitar sombras no renderizador
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
+
+// Criar luz hemisférica (luz suave global)
+var hemisphereLight = new THREE.HemisphereLight(0xaaaaaa, 0x000000, 0.5); // Cor do céu, cor do chão , intensidade
+scene.add(hemisphereLight);
+
+// Criar luz direcional (como a luz do céu), possibilita sombra para as esferas
+var directionalLight = new THREE.DirectionalLight(0xffffff, 1, 30); // Cor branca, intensidade baixa, alcance
+directionalLight.position.set(0, 10, 0); // Posição da luz vindo do "céu" (acima)
+directionalLight.target.position.set(0, 0, 0); // Direcionar para o centro (onde as esferas estão)
+directionalLight.castShadow = true; // Habilitar sombras
+scene.add(directionalLight);
+
+// Criar luz pontual (simulando uma lâmpada), sombra para os cubos
+var pointLight = new THREE.PointLight(0xFFFF00, 10, 60); // Cor, intensidade, alcance
+pointLight.position.set(6, 2, 3); // Posição inicial
+pointLight.castShadow = true; // Habilitar sombras
+scene.add(pointLight);
+
+// Criando um plano que recebe sombras
+var planeGeometry = new THREE.PlaneGeometry(30, 30);
+// O roughness controla a rugosidade enquanto o metalness dá uma sensação de superfície metálica
+var planeMaterial = new THREE.MeshStandardMaterial({ color: 0x808080, color: 0xffffff, roughness: 0.5, metalness: 0.1, side: THREE.DoubleSide });
+var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+plane.rotation.x = Math.PI / 2;
+plane.receiveShadow = true;  // O plano recebe sombras
+scene.add(plane);
 
 var raycaster = new THREE.Raycaster();
 var mouse = new THREE.Vector2();
@@ -36,6 +64,7 @@ var maxGravityDistance = 2; // Adjust the maximum distance affected by gravity a
 // Add PointerLockControls
 var controls = new THREE.PointerLockControls(camera, document.body);
 
+/*----- ACHO que essa parte pode ser removida ------
 // Criar a grid do chao
 var gridHelper = new THREE.GridHelper(20, 20);
 
@@ -134,28 +163,54 @@ for (var i = 0; i < 5; i++) {
     targets.push(target); // Adicionar o alvo à matriz de alvos
 }
 
+// Criar um carregador de texturas
+var textureLoader = new THREE.TextureLoader();
 
-// Criar o cubo
+// Carregar textura de um link externo
+var cubeTexture = textureLoader.load('https://threejs.org/manual/resources/images/compressed-but-large-wood-texture.jpg');
+var sphereTexture = textureLoader.load('https://threejsfundamentals.org/threejs/resources/images/flower-2.jpg');
+
+// Criar cubo
 var geometry = new THREE.BoxGeometry(1, 1, 1);
-var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // Cor cubo verde
+// Substituimos o MeshBasicMaterial pelo MashStandard por conta de realismo e sombras
+var cubeMaterial = new THREE.MeshStandardMaterial({map: cubeTexture});
 
 for (var i = 0; i < 5; i++) {
-    var cube = new THREE.Mesh(geometry, material);
-    cube.position.set(0, 0.5, 0); // Definir posição 0.5 unidades acima do grid
+    var cube = new THREE.Mesh(geometry, cubeMaterial);
+    cube.position.set(0, 0.6, 0); // Definir posição 0.5 unidades acima do grid
+    cube.castShadow = true; // Projetar sombra
     scene.add(cube);
     cubes.push(cube);
 }
 
-// Criar uma esfera
+// Criar esfera
 var geometry = new THREE.SphereGeometry(0.5, 16, 16); // Raio 0.5, 16 segmentos horizontais e verticais
-var material = new THREE.MeshBasicMaterial({ color: 0x0000ff }); // Cor esfera azul
+var sphereMaterial = new THREE.MeshStandardMaterial({ map: sphereTexture });
 
 for (var i = 0; i < 5; i++) {
-    var esfera = new THREE.Mesh(geometry, material);
+var esfera = new THREE.Mesh(geometry, sphereMaterial);
     esfera.position.set(0, 4.5, 0); // Definir posição 4.5 unidades acima do grid
+    esfera.castShadow = true; // Projetar sombra
     scene.add(esfera);
-    esferas.push(esfera); 
-}
+    esferas.push(esfera);
+    }
+
+// Criar um array e laço para controlar a velocidades dos alvos
+var velocidadesCubes = [];
+    for (var i = 0; i < cubes.length; i++) {
+        velocidadesCubes.push({
+        vx: (Math.random() - 0.05) * 0.02, // Velocidade X aleatória
+        vz: (Math.random() - 0.05) * 0.02  // Velocidade Z aleatória
+    });
+  }
+
+var velocidadesEsferas = [];
+    for (var i = 0; i < esferas.length; i++) {
+        velocidadesEsferas.push({
+        vx: (Math.random() - 0.5) * 0.05, // Velocidade X aleatória
+        vz: (Math.random() - 0.5) * 0.05  // Velocidade Z aleatória
+    });
+  }
 
 // Set camera to face cube position
 camera.lookAt(cube.position)
@@ -257,6 +312,19 @@ function checkCollision(position) {
 function animate() {
     if(!jogoAtivo) return;
     requestAnimationFrame(animate);
+
+    // Atualizar a posição dos cubos
+    for (var i = 0; i < cubes.length; i++) {
+        cubes[i].position.x += velocidadesCubes[i].vx;
+        cubes[i].position.z += velocidadesCubes[i].vz;
+    }
+
+    // Atualizar a posição das esferas
+    for (var i = 0; i < esferas.length; i++) {
+        esferas[i].position.x += velocidadesEsferas[i].vx;
+        esferas[i].position.z += velocidadesEsferas[i].vz;
+        esferas[i].position.y = 1.5 + Math.sin(Date.now() * 0.002 + i) * 0.2; 
+    }
 
     updateParticles();
 
@@ -810,4 +878,3 @@ document.addEventListener('keydown', function (event) {
     }
 
 });
-
