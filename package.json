@@ -6,6 +6,7 @@
   "scripts": {
     "start": "live-server --open=src/index.html"
   },
-  "dependencies": {},
-  "devDependencies": {}
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
 }
