@@ -367,19 +367,21 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-let tempoRestante = 10;
+let tempoRestante = 0;
 let jogoAtivo = false;
 let totalPlacar = 0;
 
 function cronometroJogo(){
     if(!jogoAtivo){
         jogoAtivo = true;
-        tempoRestante = 10;
+        tempoRestante = 30;
         console.log("Jogo iniciado!");
 
         let contador = setInterval(() => {
             tempoRestante--;
             console.log(`Tempo restante: ${tempoRestante} segundos`);
+            const tempoDisplay = document.getElementById('tempo');
+            tempoDisplay.textContent = `${tempoRestante}s`;
 
             if (tempoRestante <= 0){
                 clearInterval(contador);
@@ -393,13 +395,19 @@ function cronometroJogo(){
 function encerrarJogo(){
     jogoAtivo = false;
     alert(`Tempo esgotado! Jogo encerrado. Você conseguiu ${totalPlacar} pontos`);
-    //logica
     controls.unlock();
 }
 
 function removeParticle(particle) {
     scene.remove(particle);
     particles.splice(particles.indexOf(particle), 1);
+}
+
+function updatePlacar() {
+    console.log(`Atingiu um objeto: ${totalPlacar} + 30`);
+    totalPlacar = totalPlacar + 30;
+    const placarDisplay = document.getElementById('placar');
+    placarDisplay.textContent = `${totalPlacar}`;
 }
 
 function createParticle() {
@@ -478,6 +486,7 @@ function checkParticleCollision() {
 
                     if (intersects.length === 1) {
                         // Particle collided with the obj
+                        updatePlacar();
                         isColliding = true;
                         break;
                     }
@@ -853,12 +862,6 @@ function playSound(buffer, volume) {
     source.connect(gainNode);
     gainNode.connect(audioContext.destination);
     source.start(0);
-}
-
-
-function updatePlacar() {
-    //verificar time
-    //contabilizar placar
 }
 
 
