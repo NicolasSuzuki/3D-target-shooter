@@ -93,68 +93,102 @@ planeMesh.position.copy(gridHelper.position);
 //scene.add(planeMesh);*/
 
 function createPersonTarget() {
-    var targetGroup = new THREE.Group();
-
-    // Corpo (retângulo)
-    var bodyShape = new THREE.Shape();
-    bodyShape.moveTo(-0.2, -0.4);
-    bodyShape.lineTo(0.2, -0.4);
-    bodyShape.lineTo(0.2, 0.4);
-    bodyShape.lineTo(-0.2, 0.4);
-    bodyShape.lineTo(-0.2, -0.4);
-
-    var bodyGeometry = new THREE.ExtrudeGeometry(bodyShape, { depth: 0.1, bevelEnabled: false });
-    var bodyMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // Verde
-    var bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
-    targetGroup.add(bodyMesh);
-
-    // Cabeça (círculo)
-    var headShape = new THREE.Shape();
-    headShape.absarc(0, 0.6, 0.2, 0, Math.PI * 2, false);
-
-    var headGeometry = new THREE.ExtrudeGeometry(headShape, { depth: 0.1, bevelEnabled: false });
-    var headMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff }); // Azul
-    var headMesh = new THREE.Mesh(headGeometry, headMaterial);
-    targetGroup.add(headMesh);
-
-    // Braço esquerdo (retângulo)
-    var leftArmShape = new THREE.Shape();
-    leftArmShape.moveTo(-0.4, 0.2);
-    leftArmShape.lineTo(-0.2, 0.2);
-    leftArmShape.lineTo(-0.2, 0.4);
-    leftArmShape.lineTo(-0.4, 0.4);
-    leftArmShape.lineTo(-0.4, 0.2);
-
-    var leftArmGeometry = new THREE.ExtrudeGeometry(leftArmShape, { depth: 0.1, bevelEnabled: false });
-    var leftArmMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Vermelho
-    var leftArmMesh = new THREE.Mesh(leftArmGeometry, leftArmMaterial);
-    targetGroup.add(leftArmMesh);
-
-    // Braço direito (retângulo)
-    var rightArmShape = new THREE.Shape();
-    rightArmShape.moveTo(0.2, 0.2);
-    rightArmShape.lineTo(0.4, 0.2);
-    rightArmShape.lineTo(0.4, 0.4);
-    rightArmShape.lineTo(0.2, 0.4);
-    rightArmShape.lineTo(0.2, 0.2);
-
-    var rightArmGeometry = new THREE.ExtrudeGeometry(rightArmShape, { depth: 0.1, bevelEnabled: false });
-    var rightArmMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Vermelho
-    var rightArmMesh = new THREE.Mesh(rightArmGeometry, rightArmMaterial);
-    targetGroup.add(rightArmMesh);
-
-    // Definir a posição inicial
-    targetGroup.position.set(0, 4.5, 0);
-
-    // Definir a rotação para ficar de frente para a câmera
-    targetGroup.lookAt(camera.position);
-
-    // Definir escala aleatória
-    var scale = Math.random() * 0.5 + 0.75; // Ajustar o intervalo de escala conforme necessário
-    targetGroup.scale.set(scale, scale, scale);
-
-    return targetGroup;
+    const personGroup = new THREE.Group();
+  
+    //------------------------------------------------
+    // 1) TRONCO - usando varredura rotacional (Lathe)
+    //------------------------------------------------
+    // Desenhe um perfil 2D (Array de Vector2) para depois girar.
+    // Imagine esse perfil visto de lado (altura no eixo Y).
+    // Por ex., começa na cintura (y=0.0), vai até o pescoço (y=1.0).
+    const torsoPoints = [];
+    // da cintura (largura 0.3) até o ombro (largura 0.2) e subindo no eixo Y
+    torsoPoints.push(new THREE.Vector2(0.3, 0.0));   // base do tronco
+    torsoPoints.push(new THREE.Vector2(0.28, 0.3));
+    torsoPoints.push(new THREE.Vector2(0.25, 0.6));
+    torsoPoints.push(new THREE.Vector2(0.20, 1.0)); // topo do tronco, perto do pescoço
+  
+    // Cria LatheGeometry girando esses pontos em torno do eixo Y.
+    const segments = 32; // quantos "passos" na rotação
+    const torsoGeometry = new THREE.LatheGeometry(torsoPoints, segments);
+    const torsoMaterial = new THREE.MeshStandardMaterial({ color: 0x5566ff });
+    const torsoMesh = new THREE.Mesh(torsoGeometry, torsoMaterial);
+    torsoMesh.position.set(0, 0, 0); 
+    personGroup.add(torsoMesh);
+  
+    //------------------------------------------------
+    // 2) CABEÇA - usando SphereGeometry
+    //------------------------------------------------
+    const headRadius = 0.18;
+    const headGeo = new THREE.SphereGeometry(headRadius, 16, 16);
+    const headMat = new THREE.MeshStandardMaterial({ color: 0xffcc99 });
+    const headMesh = new THREE.Mesh(headGeo, headMat);
+    // Posicionar a cabeça logo acima do topo do tronco (y ~ 1.0 + raio)
+    headMesh.position.set(0, 1.0 + headRadius, 0);
+    personGroup.add(headMesh);
+  
+    //------------------------------------------------
+    // 3) BRAÇOS - usando CylinderGeometry
+    //------------------------------------------------
+    // Braço: um cilindro fino (raio sup ~ 0.07, raio inf ~ 0.06)
+    // para simular ombro mais largo que o pulso
+    const armRadiusTop = 0.07;
+    const armRadiusBot = 0.06;
+    const armHeight = 0.5;
+    const armGeo = new THREE.CylinderGeometry(armRadiusTop, armRadiusBot, armHeight, 16);
+    const armMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+    
+    // Braço esquerdo
+    const leftArmMesh = new THREE.Mesh(armGeo, armMat);
+    // Rotaciona para ficar “pendurado” no eixo X e desloca para a esquerda
+    leftArmMesh.rotation.z = Math.PI / 2;
+    // Ajusta a posição em relação ao tronco: os ombros estão ~ y=0.7..1.0
+    leftArmMesh.position.set(-0.35, 0.7, 0);
+    personGroup.add(leftArmMesh);
+  
+    // Braço direito
+    const rightArmMesh = leftArmMesh.clone();
+    rightArmMesh.position.set(0.35, 0.7, 0);
+    personGroup.add(rightArmMesh);
+  
+    //------------------------------------------------
+    // 4) PERNAS - usando CylinderGeometry
+    //------------------------------------------------
+    // Pernas: outro cilindro, maior (~0.55 de altura),
+    // raio maior que o braço.
+    const legRadiusTop = 0.09;
+    const legRadiusBot = 0.08;
+    const legHeight = 0.6;
+    const legGeo = new THREE.CylinderGeometry(legRadiusTop, legRadiusBot, legHeight, 16);
+    const legMat = new THREE.MeshStandardMaterial({ color: 0x0000ff });
+  
+    // Perna esquerda
+    const leftLegMesh = new THREE.Mesh(legGeo, legMat);
+    // Rotação para deixá-la alinhada (cilindro fica de pé)
+    leftLegMesh.position.set(-0.12, -legHeight / 2, 0); 
+    personGroup.add(leftLegMesh);
+  
+    // Perna direita
+    const rightLegMesh = leftLegMesh.clone();
+    rightLegMesh.position.set(0.12, -legHeight / 2, 0);
+    personGroup.add(rightLegMesh);
+  
+    //------------------------------------------------
+    // Ajustes Finais
+    //------------------------------------------------
+    // Eleva o boneco um pouco acima
+    personGroup.position.set(0, 4.5, 0);
+  
+    // Faz o grupo olhar para a câmera
+    personGroup.lookAt(camera.position);
+  
+    // Define escala aleatória
+    const scale = Math.random() * 0.4 + 0.8;
+    personGroup.scale.set(scale, scale, scale);
+  
+    return personGroup;
 }
+  
 
 // Adicionar alvos à cena
 for (var i = 0; i < 5; i++) {
