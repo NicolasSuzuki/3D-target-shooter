@@ -19,6 +19,9 @@ renderer.shadowMap.enabled = true; // Habilitar sombras no renderizador
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
+/*----------------------------------------------------
+Fontes de luz e sombras
+------------------------------------------------------*/
 // Criar luz hemisférica (luz suave global)
 var hemisphereLight = new THREE.HemisphereLight(0xaaaaaa, 0x000000, 0.5); // Cor do céu, cor do chão , intensidade
 scene.add(hemisphereLight);
@@ -26,7 +29,6 @@ scene.add(hemisphereLight);
 // Criar luz direcional (como a luz do céu), possibilita sombra para as esferas
 var directionalLight = new THREE.DirectionalLight(0xffffff, 1, 30); // Cor branca, intensidade baixa, alcance
 directionalLight.position.set(0, 10, 0); // Posição da luz vindo do "céu" (acima)
-directionalLight.target.position.set(0, 0, 0); // Direcionar para o centro (onde as esferas estão)
 directionalLight.castShadow = true; // Habilitar sombras
 scene.add(directionalLight);
 
@@ -57,41 +59,16 @@ var hasCubeMoved = false; // rastrear se cubo moveu
 var hasEsferaMoved = false; // rastrear se esfera moveu
 var hasTargetMoved = false; // rastrear se esfera moveu
 
-// Gravity effect variables
-var gravity = new THREE.Vector3(0, -0.01, 0); // Adjust the gravity strength as needed
-var maxGravityDistance = 2; // Adjust the maximum distance affected by gravity as needed
+// Variáveis do efeito da gravidade
+var gravity = new THREE.Vector3(0, -0.01, 0); // Ajuste a intensidade da gravidade conforme necessário
+var maxGravityDistance = 2; // Ajuste a distância máxima afetada pela gravidade conforme necessário
 
-// Add PointerLockControls
+// Adicionar PointerLockControls permitindo o controle da câmera através do movimento do mouse
 var controls = new THREE.PointerLockControls(camera, document.body);
 
-/*----- ACHO que essa parte pode ser removida ------
-// Criar a grid do chao
-var gridHelper = new THREE.GridHelper(20, 20);
-
-// Cor da grid do chao
-gridHelper.material.color.set(0xffffff);
-
-scene.add(gridHelper);
-
-
-/*Criacao do chão diferente da grid branca
-// Create a plane geometry with the same size as the grid
-var planeGeometry = new THREE.PlaneGeometry(20, 20);
-
-// Create a blue material
-var blueMaterial = new THREE.MeshBasicMaterial({
-    color: 0x0000ff,
-    side: THREE.DoubleSide
-});
-
-// Create a plane mesh with the geometry and material
-var planeMesh = new THREE.Mesh(planeGeometry, blueMaterial);
-// Rotate the grid by 90 degrees
-planeMesh.rotation.x = Math.PI / 2;
-// Set the position of the plane to align with the grid
-planeMesh.position.copy(gridHelper.position);
-//scene.add(planeMesh);*/
-
+/*----------------------------------------------------
+Alvo/Personagem complexo
+------------------------------------------------------*/
 function createPersonTarget() {
     const personGroup = new THREE.Group();
   
@@ -188,15 +165,19 @@ function createPersonTarget() {
   
     return personGroup;
 }
-  
 
 // Adicionar alvos à cena
 for (var i = 0; i < 5; i++) {
     var target = createPersonTarget();
+    target.castShadow = true; 
     scene.add(target);
     targets.push(target); // Adicionar o alvo à matriz de alvos
 }
 
+
+/*----------------------------------------------------
+Cubos e esferas: alvos simples com movimento e textura
+------------------------------------------------------*/
 // Criar um carregador de texturas
 var textureLoader = new THREE.TextureLoader();
 
@@ -230,11 +211,11 @@ var esfera = new THREE.Mesh(geometry, sphereMaterial);
     }
 
 // Criar um array e laço para controlar a velocidades dos alvos
-var velocidadesCubes = [];
-    for (var i = 0; i < cubes.length; i++) {
-        velocidadesCubes.push({
-        vx: (Math.random() - 0.05) * 0.02, // Velocidade X aleatória
-        vz: (Math.random() - 0.05) * 0.02  // Velocidade Z aleatória
+var velocidadesTarget = [];
+    for (var i = 0; i < targets.length; i++) {
+        velocidadesTarget.push({
+        vx: (Math.random() - 0.5) * 0.05, // Velocidade X aleatória
+        vz: (Math.random() - 0.5) * 0.05  // Velocidade Z aleatória
     });
   }
 
@@ -246,28 +227,42 @@ var velocidadesEsferas = [];
     });
   }
 
-// Set camera to face cube position
+var velocidadesCubes = [];
+    for (var i = 0; i < cubes.length; i++) {
+        velocidadesCubes.push({
+        vx: (Math.random() - 0.05) * 0.08, // Velocidade X aleatória
+        vz: (Math.random() - 0.05) * 0.08  // Velocidade Z aleatória
+    });
+  }
+
+// Configura a câmera para olhar na direção da posição do cubo
 camera.lookAt(cube.position)
 
-// Set up pointer lock controls
+/*----------------------------------------------------
+Controle de jogabilidade
+------------------------------------------------------*/
+// Configuração dos controles para bloqueio de tela, instruções e play
 var blocker = document.getElementById('blocker');
 var instructions = document.getElementById('instructions');
 var playButton = document.getElementById('playButton');
 
+// Evento para iniciar os controles quando o botão for clicado
 playButton.addEventListener('click', function () {
     controls.lock();
     cronometroJogo();
 });
 
+// Evento acionado quando o controle do mouse é ativado (cursor bloqueado)
 controls.addEventListener('lock', function () {
     instructions.style.display = 'none';
     blocker.style.display = 'none';
-    document.getElementById('crosshair').style.display = 'block'; // Show the crosshair when screen is locked
+    document.getElementById('crosshair').style.display = 'block'; // Exibe a mira quando o cursor está bloqueado
 });
 
+// Evento acionado quando o controle do mouse é desativado (cursor liberado)
 controls.addEventListener('unlock', function () {
-    blocker.style.display = 'block';
-    instructions.style.display = '';
+    blocker.style.display = 'block'; // Mostra novamente a tela de bloqueio
+    instructions.style.display = ''; // Mostra as instruções
     document.getElementById('crosshair').style.display = 'none'; // Hide the crosshair when screen is unlocked
 });
 
@@ -324,80 +319,122 @@ var onKeyUp = function (event) {
 document.addEventListener('keydown', onKeyDown);
 document.addEventListener('keyup', onKeyUp);
 
-// Check colisao com o grid
+// Sistema de detecção de colisão com os limites do cenário
 function checkCollision(position) {
     var gridSize = 20;
     var halfGridSize = gridSize / 2;
     var margin = 0.1;
 
+    // Se a posição estiver fora dos limites do grid, retorna verdadeiro (colisão)
     if (
         position.x < -halfGridSize + margin ||
         position.x > halfGridSize - margin ||
         position.z < -halfGridSize + margin ||
         position.z > halfGridSize - margin
     ) {
-        return true; // colidiu
+        return true; // Colidiu
     }
 
-    return false; // n colidiu
+    return false; // Não colidiu
 }
 
-// render loop
+// Definir um limite máximo para os objetos
+const LIMITE_X = 30; // Limite de movimentação no eixo X
+const LIMITE_Z = 30; // Limite de movimentação no eixo Z
+
+// Render loop: atualiza o jogo continuamente
 function animate() {
     if(!jogoAtivo) return;
+
     requestAnimationFrame(animate);
 
     // Atualizar a posição dos cubos
     for (var i = 0; i < cubes.length; i++) {
+        // Atualiza a posição do cubo
         cubes[i].position.x += velocidadesCubes[i].vx;
         cubes[i].position.z += velocidadesCubes[i].vz;
+
+        // Inverter direção quando o cubo ultrapassar o limite
+        if (Math.abs(cubes[i].position.x) > LIMITE_X) {
+            velocidadesCubes[i].vx = -velocidadesCubes[i].vx; // Inverte a direção no eixo X
+        }
+        if (Math.abs(cubes[i].position.z) > LIMITE_Z) {
+            velocidadesCubes[i].vz = -velocidadesCubes[i].vz; // Inverte a direção no eixo Z
+        }
     }
 
     // Atualizar a posição das esferas
     for (var i = 0; i < esferas.length; i++) {
         esferas[i].position.x += velocidadesEsferas[i].vx;
         esferas[i].position.z += velocidadesEsferas[i].vz;
-        esferas[i].position.y = 1.5 + Math.sin(Date.now() * 0.002 + i) * 0.2; 
+        esferas[i].position.y = 1.5 + Math.sin(Date.now() * 0.002 + i) * 0.2; // Faz a esfera "flutuar" verticalmente usando uma função senoidal
+
+        // Inverter direção quando a esfera ultrapassar o limite
+        if (Math.abs(esferas[i].position.x) > LIMITE_X) {
+            velocidadesEsferas[i].vx = -velocidadesEsferas[i].vx; // Inverte a direção no eixo X
+        }
+        if (Math.abs(esferas[i].position.z) > LIMITE_Z) {
+            velocidadesEsferas[i].vz = -velocidadesEsferas[i].vz; // Inverte a direção no eixo Z
+        }
+    }
+
+    // Atualizar a posição dos alvos
+    for (var i = 0; i < targets.length; i++) {
+        targets[i].position.x += velocidadesTarget[i].vx;
+        targets[i].position.z += velocidadesTarget[i].vz;
+        targets[i].position.y = 4.5 + Math.sin(Date.now() * 0.002 + i) * 0.2; // Ajusta a altura do alvo
+
+        // Inverter direção quando o alvo ultrapassar o limite
+        if (Math.abs(targets[i].position.x) > LIMITE_X) {
+            velocidadesTarget[i].vx = -velocidadesTarget[i].vx; // Inverte a direção no eixo X
+        }
+        if (Math.abs(targets[i].position.z) > LIMITE_Z) {
+            velocidadesTarget[i].vz = -velocidadesTarget[i].vz; // Inverte a direção no eixo Z
+        }
     }
 
     updateParticles();
 
     checkParticleCollision();
 
+    // Se o controle do jogador estiver ativo (cursor travado na tela)
     if (controls.isLocked) {
         var delta = 0.03;
 
+        // Movimentação para frente
         if (moveForward) {
             controls.moveForward(delta);
             if (checkCollision(controls.getObject().position)) {
-                controls.moveForward(-delta); // Move back to the previous position
+                controls.moveForward(-delta); // Reverte o movimento se houver colisão
             }
         }
 
+        // Movimentação para trás
         if (moveBackward) {
             controls.moveForward(-delta);
             if (checkCollision(controls.getObject().position)) {
-                controls.moveForward(delta); // Move back to the previous position
+                controls.moveForward(delta); 
             }
         }
 
         if (moveLeft) {
             controls.moveRight(-delta);
             if (checkCollision(controls.getObject().position)) {
-                controls.moveRight(delta); // Move back to the previous position
+                controls.moveRight(delta); 
             }
         }
 
         if (moveRight) {
             controls.moveRight(delta);
             if (checkCollision(controls.getObject().position)) {
-                controls.moveRight(-delta); // Move back to the previous position
+                controls.moveRight(-delta); 
             }
         }
     }
 
     updateTriangles()
 
+    // Renderiza a cena do jogo com a câmera atual
     renderer.render(scene, camera);
 }
 
@@ -405,12 +442,14 @@ let tempoRestante = 0;
 let jogoAtivo = false;
 let totalPlacar = 0;
 
+// Função que inicia o cronômetro e a lógica do jogo
 function cronometroJogo(){
     if(!jogoAtivo){
         jogoAtivo = true;
         tempoRestante = 30;
         console.log("Jogo iniciado!");
 
+        // Cria um intervalo para diminuir o tempo a cada segundo
         let contador = setInterval(() => {
             tempoRestante--;
             console.log(`Tempo restante: ${tempoRestante} segundos`);
@@ -421,22 +460,20 @@ function cronometroJogo(){
                 clearInterval(contador);
                 encerrarJogo();
             }
-        }, 1000);
+        }, 1000); // Executa a cada 1 segundo
     }
     animate();
 }
 
+// Função que finaliza o jogo quando o tempo se esgota
 function encerrarJogo(){
     jogoAtivo = false;
     alert(`Tempo esgotado! Jogo encerrado. Você conseguiu ${totalPlacar} pontos`);
+    totalPlacar = 0; // Zera o placar sempre que o jogo acaba
     controls.unlock();
 }
 
-function removeParticle(particle) {
-    scene.remove(particle);
-    particles.splice(particles.indexOf(particle), 1);
-}
-
+// Função que atualiza a pontuação do jogador ao atingir um objeto
 function updatePlacar() {
     console.log(`Atingiu um objeto: ${totalPlacar} + 30`);
     totalPlacar = totalPlacar + 30;
@@ -444,24 +481,35 @@ function updatePlacar() {
     placarDisplay.textContent = `${totalPlacar}`;
 }
 
+/*----------------------------------------------------
+Definição, movimento e disparo do projetil
+------------------------------------------------------*/
+// Função que remove uma partícula da cena
+function removeParticle(particle) {
+    scene.remove(particle);
+    particles.splice(particles.indexOf(particle), 1);
+}
+
+// Função que cria uma partícula (projetil)
 function createParticle() {
     playLaserSound();
     var geometry = new THREE.SphereGeometry(0.05, 16, 16);
     var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
     var particle = new THREE.Mesh(geometry, material);
-    particle.position.copy(camera.position);
-    particle.initialDirection = camera.getWorldDirection(new THREE.Vector3());
-    particle.velocity = particle.initialDirection.clone().multiplyScalar(0.25);
+    particle.position.copy(camera.position); // Define a posição inicial como a posição da câmera
+    particle.initialDirection = camera.getWorldDirection(new THREE.Vector3()); // Obtém a direção da câmera
+    particle.velocity = particle.initialDirection.clone().multiplyScalar(0.25); // Define a velocidade da partícula
     scene.add(particle);
-    particles.push(particle);
+    particles.push(particle); // Armazena a partícula na lista de partículas
 }
 
+// Função que atualiza a posição das partículas e remove as que saírem do limite
 function updateParticles() {
     var distanceThreshold = 20;
 
     for (var i = particles.length - 1; i >= 0; i--) {
         var particle = particles[i];
-        particle.position.add(particle.velocity);
+        particle.position.add(particle.velocity); // Move a partícula na direção definida
 
         var distance = particle.position.distanceTo(camera.position);
         if (distance > distanceThreshold) {
@@ -470,67 +518,70 @@ function updateParticles() {
     }
 }
 
+// Função que é chamada ao pressionar um botão do mouse
 function onMouseDown(event) {
     event.preventDefault();
 
-    if (controls.isLocked) {
-        // Particle creation is allowed only when controls are locked
-        if (event.button === 0) {
-            createParticle();
+    if (controls.isLocked) { // Verifica se os controles estão travados (modo de jogo ativo)
+        if (event.button === 0) { // Se o botão esquerdo do mouse for pressionado
+            createParticle(); // Cria e dispara uma partícula
         }
     }
 }
 
+// Função que detecta o movimento do mouse
 function onMouseMove(event) {
     event.preventDefault();
 
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-    raycaster.setFromCamera(mouse, camera);
+    raycaster.setFromCamera(mouse, camera); // Atualiza o raycaster para detectar interações com objetos
 }
 
-// Mouse click event listener
-document.addEventListener('mousedown', onMouseDown);
-document.addEventListener('mousemove', onMouseMove, false);
+// Adiciona eventos de clique e movimento do mouse
+document.addEventListener('mousedown', onMouseDown); // Detecta cliques do jogador
+document.addEventListener('mousemove', onMouseMove, false); // Atualiza a posição do mouse
 
-// Declare a variable to count collided particles
+// Variável para contar quantas partículas colidiram com objetos
 var collidedParticles = 0;
 
-var hasCubeMoved = false; // Flag to track if the cube has already been moved
+// Variável para verificar se um alvo já foi movido
+var hasCubeMoved = false; 
 var hasEsferaMoved = false;
 
-// Check collision between particles and cubes
+// Função geral que verifica colisões entre partículas e cubos
 function checkParticleCollision() {
+    // Função que verifica a colisão entre objetos e atualiza suas propriedades
     function verifyCollision(objs, objsOnCollision, hasMoved, color) {
         for (var j = 0; j < objs.length; j++) {
             var obj = objs[j];
             var isColliding = false;
 
-            if (obj.visible) {
+            if (obj.visible) { // Verifica se o objeto está visível na cena
                 for (var i = 0; i < objsOnCollision.length; i++) {
                     var objOnCollision = objsOnCollision[i];
                     var objOnCollisionPosition = objOnCollision.position;
-                    var objOnCollisionPositionEdge = objOnCollisionPosition
+                    var objOnCollisionPositionEdge = objOnCollisionPosition // Calcula a posição da borda da partícula para a detecção de colisão
                         .clone()
                         .add(objOnCollision.velocity.clone().normalize().multiplyScalar(0.1));
-
+                    
+                    // Define o raycaster para detectar colisões
                     raycaster.set(objOnCollisionPosition, objOnCollisionPositionEdge.sub(objOnCollisionPosition).normalize());
-                    var intersects = raycaster.intersectObject(obj);
+                    var intersects = raycaster.intersectObject(obj); // Verifica interseções com o objeto
 
                     if (intersects.length === 1) {
-                        // Particle collided with the obj
+                        // Se houver uma interseção, houve colisão
                         updatePlacar();
-                        isColliding = true;
-                        break;
+                        isColliding = true; // Atualiza a pontuação
+                        break; // Fim do loop pois já ocorreu a colisão
                     }
                 }
             }
 
-            // Set cube color and visibility based on collision status
+            // Define a cor do cubo e sua visibilidade com base no status da colisão
             if (isColliding) {
-                // Cube is red during collision
-                
+                // Se houver colisão, o cubo fica vermelho
                 if (obj && obj.material) obj.material.color.set(0xff0000);
                 else {
                     obj.traverse(function(child) {
@@ -539,11 +590,11 @@ function checkParticleCollision() {
                         }
                     });
                 }
-                explosion(obj);
-                moveObjRandomly(obj);
-                hasMoved = false; // Reset the flag when the cube is hidden
+                explosion(obj); // Executa o efeito de explosão
+                moveObjRandomly(obj); // Move o objeto para uma posição aleatória
+                hasMoved = false; // Reseta a flag indicando que o objeto ainda não foi movido após a colisão
             } else {
-                // Cube is green when there is no collision
+                // Se não houver colisão, o objeto volta à sua cor original
                 if (obj && obj.material) obj.material.color.set(color);
                 else {
                     obj.traverse(function(child) {
@@ -553,24 +604,25 @@ function checkParticleCollision() {
                     });
                 }
 
-                // Check if all particles have been removed and the cube has not moved
+                  // Verifica se todas as partículas foram removidas e o objeto ainda não foi movido
                 if (collidedParticles === objsOnCollision.length && !hasMoved) {
-                    collidedParticles = 0; // Reset the collided particles counter
-                    hasMoved = true; // Set the flag to indicate that the cube has been moved
+                    collidedParticles = 0; // Reseta o contador de partículas que colidiram
+                    hasMoved = true; // Objeto movido
                 }
             }
         }
     }
 
+    // Verifica colisões entre partículas e diferentes tipos de objetos
     verifyCollision(cubes, particles, hasCubeMoved, 0x00ff00);
     verifyCollision(esferas, particles, hasEsferaMoved, 0xff0000);
     verifyCollision(targets, particles, hasTargetMoved, 0xf00f00);
 
 }
 
-// Move the cube to a random location on the grid
+// Move o objeto para uma posição aleatória na grade
 function moveObjRandomly(obj) {
-    var gridSize = Math.random() * 20; // Adjust the grid size as desired
+    var gridSize = Math.random() * 20;  // Define um tamanho aleatório
     var randomX = Math.floor(Math.random() * gridSize) - gridSize / 2;
     var randomZ = Math.floor(Math.random() * gridSize) - gridSize / 2;
 
@@ -578,38 +630,42 @@ function moveObjRandomly(obj) {
     obj.position.z = randomZ;
 }
 
-// Create an explosion of small triangles
+/*----------------------------------------------------
+Efeito especial de explosão
+------------------------------------------------------*/
+// Cria uma explosão de pequenos triângulos
 function explosion(cube) {
 
-    playExplosionSound();
+    playExplosionSound(); // Som de explosão
 
-    var explosionCount = 50;
+    var explosionCount = 50; // Define o número de triângulos na explosão
 
     for (var i = 0; i < explosionCount; i++) {
-        var triangle = createTriangle(cube);
-        scene.add(triangle);
-        triangles.push(triangle); // Add the triangle to the triangles array
+        var triangle = createTriangle(cube); // Cria um triângulo
+        scene.add(triangle); // Adiciona o triângulo à cena
+        triangles.push(triangle); // Armazena o triângulo no array
 
         triangle.userData = {
             direction: new THREE.Vector3(
                 Math.random() * 2 - 1,
                 Math.random() * 2 - 1,
                 Math.random() * 2 - 1
-            ).normalize(),
-            speed: Math.random() * 0.05 + 0.01, // Random speed
+            ).normalize(), // Direção aleatória normalizada
+            speed: Math.random() * 0.05 + 0.01,  // Velocidade aleatória
             rotationAxis: new THREE.Vector3(
                 Math.random(),
                 Math.random(),
                 Math.random()
-            ).normalize(),
-            rotationSpeed: Math.random() * 0.1 + 0.005, // Random rotation speed
-            distance: 0, // Distance traveled by the triangle
-            remove: false, // Flag to mark if the triangle should be removed
-            parentCube: cube, // Reference to the collided cube
+            ).normalize(), // Define um eixo de rotação aleatório
+            rotationSpeed: Math.random() * 0.1 + 0.005, // Velocidade de rotação aleatória
+            distance: 0, // Distância percorrida pelo triângulo
+            remove: false, // Indica remoção do triângulo
+            parentCube: cube,  // Referência ao cubo colidido
         };
     }
 }
 
+// Processo para as esferas
 function explosionEsfera(esfera) {
 
     playExplosionSound();
@@ -619,7 +675,7 @@ function explosionEsfera(esfera) {
     for (var i = 0; i < explosionCount; i++) {
         var triangle = createTriangleE(esfera);
         scene.add(triangle);
-        triangles.push(triangle); // Add the triangle to the triangles array
+        triangles.push(triangle); 
 
         triangle.userData = {
             direction: new THREE.Vector3(
@@ -627,16 +683,16 @@ function explosionEsfera(esfera) {
                 Math.random() * 2 - 1,
                 Math.random() * 2 - 1
             ).normalize(),
-            speed: Math.random() * 0.05 + 0.01, // Random speed
+            speed: Math.random() * 0.05 + 0.01, 
             rotationAxis: new THREE.Vector3(
                 Math.random(),
                 Math.random(),
                 Math.random()
             ).normalize(),
-            rotationSpeed: Math.random() * 0.1 + 0.005, // Random rotation speed
-            distance: 0, // Distance traveled by the triangle
-            remove: false, // Flag to mark if the triangle should be removed
-            parentEsfera: esfera, // Reference to the collided esfera
+            rotationSpeed: Math.random() * 0.1 + 0.005, 
+            distance: 0, 
+            remove: false, 
+            parentEsfera: esfera, 
         };
     }
 }
@@ -644,35 +700,37 @@ function explosionEsfera(esfera) {
 function createTarget(cube) {
     var targetGroup = new THREE.Group();
 
+    // Define os materiais vermelho e branco para os anéis do alvo
     var materialRed = new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide });
     var materialWhite = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
     
-    var outerRadius = 0.15;
-    var numberOfRings = 5;
+    var outerRadius = 0.15; // Raio externo do alvo
+    var numberOfRings = 5; // Número de anéis no alvo
 
-    for (var i = 0; i < numberOfRings; i++) {
-        var radius = outerRadius - (i * outerRadius / numberOfRings);
+    for (var i = 0; i < numberOfRings; i++) { // Cria os anéis do alvo alternando as cores vermelho e branco
+        var radius = outerRadius - (i * outerRadius / numberOfRings); // Calcula o raio do anel atual
         var geometry = new THREE.CircleGeometry(radius, 32);
-        var material = (i % 2 === 0) ? materialRed : materialWhite;
+        var material = (i % 2 === 0) ? materialRed : materialWhite; // Alterna as cores
         var ring = new THREE.Mesh(geometry, material);
-        ring.position.z = 0.01 * i; // Slightly offset each ring to avoid z-fighting
+        ring.position.z = 0.01 * i; // Desloca levemente os anéis para evitar z-fighting (sobreposição gráfica)
         targetGroup.add(ring);
     }
 
-    // Set initial position at the center of the collided cube
+    // Define a posição inicial do alvo no centro do cubo com o qual colidiu
     targetGroup.position.copy(cube.position);
 
-    // Set the rotation to face the camera
+    // Faz o alvo sempre olhar para a câmera
     targetGroup.lookAt(camera.position);
 
-    // Set random scale
-    var scale = Math.random() * 1 + 0.5; // Adjust the scale range as desired
+    // Define um tamanho aleatório para o alvo
+    var scale = Math.random() * 1 + 0.5; // Ajusta o intervalo de escala conforme necessário
     targetGroup.scale.set(scale, scale, scale);
 
     return targetGroup;
 }
 
-// Create a small triangle
+
+// Cria um triângulo
 function createTriangle(cube) {
     var geometry = new THREE.BufferGeometry();
     var vertices = new Float32Array([
@@ -689,19 +747,20 @@ function createTriangle(cube) {
 
     var triangle = new THREE.Mesh(geometry, material);
 
-    // Set initial position at the center of the collided cube
+    // Define a posição inicial no centro do cubo colidido
     triangle.position.copy(cube.position);
 
-    // Set the rotation to face the camera
+    // Define a rotação para que o triângulo fique voltado para a câmera
     triangle.lookAt(camera.position);
 
-    // Set random scale
-    var scale = Math.random() * 1 + 0.5; // Adjust the scale range as desired
+    // Define um tamanho aleatório
+    var scale = Math.random() * 1 + 0.5; // Ajuste a faixa de escala conforme necessário
     triangle.scale.set(scale, scale, scale);
 
     return triangle;
 }
 
+// O mesmo processo para as esferas
 function createTriangleE(esfera) {
     var geometry = new THREE.BufferGeometry();
     var vertices = new Float32Array([
@@ -718,44 +777,40 @@ function createTriangleE(esfera) {
 
     var triangle = new THREE.Mesh(geometry, material);
 
-    // Set initial position at the center of the collided esfera
     triangle.position.copy(esfera.position);
 
-    // Set the rotation to face the camera
     triangle.lookAt(camera.position);
 
-    // Set random scale
-    var scale = Math.random() * 1 + 0.5; // Adjust the scale range as desired
+    var scale = Math.random() * 1 + 0.5;
     triangle.scale.set(scale, scale, scale);
 
     return triangle;
 }
 
-
-// Update the triangles' positions, rotations, and remove them if necessary
+// Atualiza a posição, rotação e remove triângulos se necessário
 function updateTriangles() {
     for (var i = 0; i < triangles.length; i++) {
         var triangle = triangles[i];
         var userData = triangle.userData;
 
-        // Move the triangle in its direction at a random speed
+        // Move o triângulo na direção definida com uma velocidade aleatória
         var speed = userData.speed;
         triangle.position.add(userData.direction.clone().multiplyScalar(speed));
 
-        // Rotate the triangle around its rotation axis at a random speed
+        // Rotaciona o triângulo em torno de seu eixo de rotação com uma velocidade aleatória
         var rotationSpeed = userData.rotationSpeed;
         triangle.rotateOnWorldAxis(userData.rotationAxis, rotationSpeed);
 
-        // Update the distance traveled by the triangle
+        // Atualiza a distância percorrida pelo triângulo
         userData.distance += speed;
 
-        // If the triangle has traveled a certain distance, mark it for removal
+        // Se o triângulo percorreu uma certa distância, marca para remoção
         if (userData.distance >= 2) {
             userData.remove = true;
         }
     }
 
-    // Remove triangles that are marked for removal
+    // Remove os triângulos que foram marcados para remoção
     for (var i = triangles.length - 1; i >= 0; i--) {
         if (triangles[i].userData.remove) {
             scene.remove(triangles[i]);
@@ -763,33 +818,31 @@ function updateTriangles() {
         }
     }
 
-
-    // Resize renderer when window size changes
+    // Redimensiona o renderizador quando o tamanho da janela muda
     window.addEventListener('resize', function () {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
-
-
 }
 
-
-// Create an AudioContext
+/*----------------------------------------------------
+Efeitos sonoros e controle do som
+------------------------------------------------------*/
 var audioContext = null;
-var musicBuffer = null;
-var laserSoundBuffer = null;
-var explosionSoundBuffer = null;
+var musicBuffer = null; // Música
+var laserSoundBuffer = null; // Laser
+var explosionSoundBuffer = null; // Explosão
 var isMusicPlaying = false;
 var musicSource = null;
 
-// Function to load audio files
+// Função para carregar arquivos de áudio a partir de uma URL
 function loadAudioFile(url, callback) {
     var request = new XMLHttpRequest();
     request.open('GET', url, true);
-    request.responseType = 'arraybuffer';
+    request.responseType = 'arraybuffer'; // Define o tipo de resposta como um buffer de áudio
 
-    request.onload = function () {
+    request.onload = function () { // Decodifica o áudio recebido e chama o callback com o buffer processado
         audioContext.decodeAudioData(request.response, function (buffer) {
             callback(buffer);
         });
@@ -798,19 +851,19 @@ function loadAudioFile(url, callback) {
     request.send();
 }
 
-// Function to play the music
+// Função para iniciar ou pausar a música
 function playMusic() {
-    if (!audioContext) {
+    if (!audioContext) {  // Se o contexto de áudio ainda não foi criado, inicializa um novo
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
 
-    if (!musicBuffer) {
+    if (!musicBuffer) {  // Se a música ainda não foi carregada, faz o carregamento e a reprodução
         loadAudioFile('https://www.shanebrumback.com/sounds/first-person-shooter-music.wav', function (buffer) {
             musicBuffer = buffer;
-            playLoopedSound(buffer, .35);
+            playLoopedSound(buffer, .35); // Toca a música com volume de 35%
             isMusicPlaying = true;
         });
-    } else {
+    } else {  // Se a música já está carregada, alterna entre pausar e continuar a reprodução
         if (isMusicPlaying) {
             pauseSound();
             isMusicPlaying = false;
@@ -821,76 +874,76 @@ function playMusic() {
     }
 }
 
-// Function to play a sound in a loop with a specific volume
+// Função para tocar um som em loop com um volume específico
 function playLoopedSound(buffer, volume) {
     musicSource = audioContext.createBufferSource();
     musicSource.buffer = buffer;
-    musicSource.loop = true; // Enable looping
-    var gainNode = audioContext.createGain();
-    gainNode.gain.setValueAtTime(0, audioContext.currentTime); // Set initial volume to 0
-    gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 2); // Gradually increase volume to desired level (adjust time as needed)
-    musicSource.connect(gainNode);
+    musicSource.loop = true; // Ativa a reprodução em loop
+    var gainNode = audioContext.createGain(); // Cria um nó de controle de volume
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime); // Define o volume inicial como 0
+    gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 2); // Aumenta gradualmente o volume
+
+    musicSource.connect(gainNode); // Conecta a fonte ao nó de volume
     gainNode.connect(audioContext.destination);
 
-    // Delay the start of the audio source
-    musicSource.start(audioContext.currentTime + 0.1); // Adjust the delay as needed
-
-    // Note: You can adjust the delay time and volume ramping to find the appropriate values that work best for your audio files.
+    // Inicia a reprodução com um pequeno atraso para evitar cortes abruptos
+    musicSource.start(audioContext.currentTime + 0.1);
 }
 
-// Function to pause the music
+// Função para pausar a música
 function pauseSound() {
     if (musicSource) {
-        musicSource.stop();
-        musicSource.disconnect();
+        musicSource.stop(); // Para a reprodução da música
+        musicSource.disconnect(); // // Desconecta a fonte de áudio
         musicSource = null;
     }
 }
 
-// Function to resume the music
+// Função para retomar a música pausada
 function resumeSound() {
     if (musicBuffer) {
         playLoopedSound(musicBuffer, .35);
     }
 }
 
-// Function to play the laser sound
+// Função para tocar o som do laser
 function playLaserSound() {
-    if (!audioContext) {
+    if (!audioContext) { // Inicializa o contexto de áudio se ainda não estiver criado
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
 
-    if (!laserSoundBuffer) {
+    if (!laserSoundBuffer) { // Se o som do laser ainda não foi carregado, carrega e toca
         loadAudioFile('https://www.shanebrumback.com/sounds/laser.wav', function (buffer) {
             laserSoundBuffer = buffer;
-            playSound(buffer, 1);
+            playSound(buffer, 1); 
         });
     } else {
         playSound(laserSoundBuffer, 1);
     }  
 }
 
-// Function to play the explosion sound
+// Função para reproduzir o som de explosão
 function playExplosionSound() {
-    if (!audioContext) {
+    if (!audioContext) {  // Verifica se o contexto de áudio já foi criado, se não, cria um novo
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
 
+    // Se o som da explosão ainda não foi carregado, faz o carregamento
     if (!explosionSoundBuffer) {
         loadAudioFile('https://www.shanebrumback.com/sounds/explosion.wav', function (buffer) {
             explosionSoundBuffer = buffer;
-            playSound(buffer, 0.25); // Adjust the volume here (0.5 = 50% volume)
+            playSound(buffer, 0.25); // Ajusta o volume do som para 25% (0.25)
         });
     } else {
-        playSound(explosionSoundBuffer, 0.25); // Adjust the volume here (0.5 = 50% volume)
+        playSound(explosionSoundBuffer, 0.25); // Se o som já foi carregado anteriormente, apenas o reproduz
     }
 }
 
-// Function to play a sound with a specific volume
+// Função genérica para tocar um som com um volume específico
 function playSound(buffer, volume) {
     var source = audioContext.createBufferSource();
     var gainNode = audioContext.createGain();
-    gainNode.gain.value = volume;
+    gainNode.gain.value = volume; // Define o volume do som
 
     source.buffer = buffer;
     source.connect(gainNode);
@@ -898,20 +951,17 @@ function playSound(buffer, volume) {
     source.start(0);
 }
 
-
-// Event listener for key press
+// Eventos do teclado para interações no jogo
 document.addEventListener('keydown', function (event) {
-
     if (event.key === 'm' || event.key === 'M') {
-        playMusic();
+        playMusic(); // Ativa ou desativa a música
     } else if (event.key === ' ') {
         if (controls.isLocked) {
-            event.preventDefault(); // Prevent default action of spacebar
-            createParticle();
-            playLaserSound();
+            event.preventDefault(); 
+            createParticle(); // Cria efeito ao atirar
+            playLaserSound(); // Toca som de laser
         }
     } else if (event.key === 'e' || event.key === 'E') {
-        playExplosionSound();
+        playExplosionSound(); // Toca som de explosão
     }
-
 });
