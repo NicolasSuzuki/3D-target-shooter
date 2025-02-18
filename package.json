@@ -11,5 +11,6 @@
   },
   "dependencies": {
     "3d-target-shooter": "file:"
-  }
+  },
+  "type": "module"
 }
