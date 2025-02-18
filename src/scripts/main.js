@@ -1,7 +1,7 @@
 import { playMusic, playLaserSound, playExplosionSound } from './sounds.js';
 import { moveObjRandomly, checkParticleCollision, checkCollision, createParticle } from './effects.js';
 import { createCubeTarget, createPersonTarget, createSphereTarget } from './targets.js';
-import { onKeyUp, onKeyDown, onMouseDown, onMouseMove } from './controls.js';
+import { onMouseDown, onMouseMove } from './controls.js';
 // Cria a cena e ajusta camera
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -163,9 +163,52 @@ var moveBackward = false;
 var moveLeft = false;
 var moveRight = false;
 
-document.addEventListener('keydown', (e) => onKeyDown(e, moveForward, moveBackward, moveLeft, moveRight));
-document.addEventListener('keyup', (e) => onKeyUp(e, moveForward, moveBackward, moveLeft, moveRight));
+document.addEventListener('keydown', onKeyDown);
+document.addEventListener('keyup', onKeyUp);
 
+function onKeyDown(e) {
+    switch (e.keyCode) {
+        case 38: // cima - seta
+        case 87: // W - tecla
+            console.log("Cima");
+            moveForward = true;
+            console.log(moveForward);
+            break;
+        case 37: // esquerda - seta 
+        case 65: // A - tecla
+            moveLeft = true;
+            break;
+        case 40: // baixo - seta
+        case 83: // S - tecla
+            moveBackward = true;
+            break;
+        case 39: // direita - seta
+        case 68: // D - tecla
+            moveRight = true;
+            break;
+    }
+};
+
+function onKeyUp (e) {
+    switch (e.keyCode) {
+        case 38: // cima - seta
+        case 87: // W - tecla
+            moveForward = false;
+            break;
+        case 37: // esquerda - seta 
+        case 65: // A - tecla
+            moveLeft = false;
+            break;
+        case 40: // baixo - seta
+        case 83: // S - tecla
+            moveBackward = false;
+            break;
+        case 39: // direita - seta
+        case 68: // D - tecla
+            moveRight = false;
+            break;
+    }
+};
 // Definir um limite máximo para os objetos
 const LIMITE_X = 30; // Limite de movimentação no eixo X
 const LIMITE_Z = 30; // Limite de movimentação no eixo Z
@@ -244,6 +287,7 @@ function animate() {
     if (controls.isLocked) {
         var delta = 0.03;
 
+        console.log(moveForward, moveBackward, moveLeft, moveRight, controls);
         // Movimentação para frente
         if (moveForward) {
             controls.moveForward(delta);
