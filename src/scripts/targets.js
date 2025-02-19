@@ -98,6 +98,44 @@ export function createPersonTarget(camera) {
     return personGroup;
 }
 
+export function createBottle() {
+    const bottleGroup = new THREE.Group();
+    
+    // Perfil 2D para LatheGeometry (garrafa)
+    const bottlePoints = [
+        new THREE.Vector2(0.2, 0.0),   // Base
+        new THREE.Vector2(0.25, 0.3),
+        new THREE.Vector2(0.3, 0.6),
+        new THREE.Vector2(0.35, 0.8),
+        new THREE.Vector2(0.3, 1.2),
+        new THREE.Vector2(0.2, 1.4),   // Gargalo
+        new THREE.Vector2(0.15, 1.6),
+        new THREE.Vector2(0.15, 1.8)
+    ];
+    
+    const bottleGeometry = new THREE.LatheGeometry(bottlePoints, 32);
+    const bottleMaterial = new THREE.MeshStandardMaterial({ color: 0x77ccff, transparent: true, opacity: 0.6 });
+    const bottleMesh = new THREE.Mesh(bottleGeometry, bottleMaterial);
+    bottleGroup.add(bottleMesh);
+    
+    // Rolha
+    const corkGeometry = new THREE.CylinderGeometry(0.15, 0.17, 0.2, 16);
+    const corkMaterial = new THREE.MeshStandardMaterial({ color: 0xaa7744 });
+    const corkMesh = new THREE.Mesh(corkGeometry, corkMaterial);
+    corkMesh.position.set(0, 1.85, 0);
+    bottleGroup.add(corkMesh);
+    
+    // Mensagem (um cilindro enrolado dentro da garrafa)
+    const messageGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.5, 16);
+    const messageMaterial = new THREE.MeshStandardMaterial({ color: 0xffee99 });
+    const messageMesh = new THREE.Mesh(messageGeometry, messageMaterial);
+    messageMesh.position.set(0, 0.8, 0);
+    messageMesh.rotation.z = Math.PI / 6;
+    bottleGroup.add(messageMesh);
+    
+    return bottleGroup;
+}
+
 
 export function createCubeTarget() {
     var textureLoader = new THREE.TextureLoader();

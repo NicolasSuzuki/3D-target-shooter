@@ -1,6 +1,6 @@
 import { playMusic, playLaserSound, playExplosionSound } from './sounds.js';
 import { moveObjRandomly, checkParticleCollision, checkCollision, createParticle } from './effects.js';
-import { createCubeTarget, createPersonTarget, createSphereTarget } from './targets.js';
+import { createBottle, createCubeTarget, createPersonTarget, createSphereTarget } from './targets.js';
 import { onMouseDown, onMouseMove } from './controls.js';
 // Cria a cena e ajusta camera
 var scene = new THREE.Scene();
@@ -90,6 +90,13 @@ for (var i = 0; i < 5; i++) {
     cubes.push(cube);
 }
 
+for (var i = 0; i < 5; i++) {
+    var target = createBottle(camera);
+    target.castShadow = true; 
+    scene.add(target);
+    targets.push(target); // Adicionar o alvo à matriz de alvos
+}
+
 // Criar esfera
 for (var i = 0; i < 5; i++) {
     var esfera = createSphereTarget();
@@ -97,7 +104,7 @@ for (var i = 0; i < 5; i++) {
     esfera.castShadow = true; // Projetar sombra
     scene.add(esfera);
     esferas.push(esfera);
-    }
+}
 
 // Criar um array e laço para controlar a velocidades dos alvos
 var velocidadesTarget = [];

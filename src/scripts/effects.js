@@ -94,11 +94,11 @@ export function checkParticleCollision(cubes, esferas, targets, particles, colli
                 // Se houver colisão, o cubo fica vermelho
                 if (obj && obj.material) obj.material.color.set(0xff0000);
                 else {
-                    obj.traverse(function(child) {
-                        if (child instanceof THREE.Mesh) {
-                            child.material.color.set(0xff0000);
-                        }
-                    });
+                    // obj.traverse(function(child) {
+                    //     if (child instanceof THREE.Mesh) {
+                    //         child.material.color.set(0xff0000);
+                    //     }
+                    // });
                 }
                 explosion(obj, scene, triangles, camera); // Executa o efeito de explosão
                 moveObjRandomly(obj); // Move o objeto para uma posição aleatória
@@ -107,11 +107,11 @@ export function checkParticleCollision(cubes, esferas, targets, particles, colli
                 // Se não houver colisão, o objeto volta à sua cor original
                 if (obj && obj.material) obj.material.color.set(color);
                 else {
-                    obj.traverse(function(child) {
-                        if (child instanceof THREE.Mesh) {
-                            child.material.color.set(color);
-                        }
-                    });
+                    // obj.traverse(function(child) {
+                    //     if (child instanceof THREE.Mesh) {
+                    //         child.material.color.set(color);
+                    //     }
+                    // });
                 }
 
                   // Verifica se todas as partículas foram removidas e o objeto ainda não foi movido
