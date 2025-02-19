@@ -139,7 +139,7 @@ export function createBottle() {
 
 export function createCubeTarget() {
     var textureLoader = new THREE.TextureLoader();
-    var cubeTexture = textureLoader.load('https://threejs.org/manual/resources/images/compressed-but-large-wood-texture.jpg');
+    var cubeTexture = textureLoader.load('https://threejs.org/examples/textures/crate.gif');
     // Criar cubo
     var geometry = new THREE.BoxGeometry(1, 1, 1);
     // Substituimos o MeshBasicMaterial pelo MashStandard por conta de realismo e sombras
@@ -150,7 +150,7 @@ export function createCubeTarget() {
 }
 export function createSphereTarget() {
     var textureLoader = new THREE.TextureLoader();
-    var sphereTexture = textureLoader.load('https://threejsfundamentals.org/threejs/resources/images/flower-2.jpg');
+    var sphereTexture = textureLoader.load('https://threejs.org/manual/resources/images/mip-low-res-enlarged.png');
     var geometry = new THREE.SphereGeometry(0.5, 16, 16); // Raio 0.5, 16 segmentos horizontais e verticais
     var sphereMaterial = new THREE.MeshStandardMaterial({ map: sphereTexture });
     var esfera = new THREE.Mesh(geometry, sphereMaterial);

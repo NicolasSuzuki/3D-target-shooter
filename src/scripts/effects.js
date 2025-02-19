@@ -124,7 +124,7 @@ export function checkParticleCollision(cubes, esferas, targets, particles, colli
     }
 
     // Verifica colisões entre partículas e diferentes tipos de objetos
-    verifyCollision(cubes, particles, hasCubeMoved, 0x00ff00);
+    verifyCollision(cubes, particles, hasCubeMoved, 0xEDD5B3);
     verifyCollision(esferas, particles, hasEsferaMoved, 0xff0000);
     verifyCollision(targets, particles, hasTargetMoved, 0xf00f00);
 
